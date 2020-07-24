@@ -4,21 +4,13 @@ import './PostItem.css'
 
 class PostItem extends Component {
     render() {
-        const { id, title, author, content, modifiedDate } = this.props;
+        const { id, title, author, modifiedDate } = this.props;
 
         return (
             <div className='postItem'>
                 <div>{id}</div>
                 <div>
-                    <Link to={{
-                        pathname: `/posts/${id}`,
-                        state: {
-                            id: id,
-                            title: title,
-                            content: content,
-                            author: author,
-                        }
-                    }} className="link">{title}</Link>
+                    <Link to={`/posts/${id}`} className="link">{title}</Link>
                 </div>
                 <div>{author}</div>
                 <div>{modifiedDate}</div>

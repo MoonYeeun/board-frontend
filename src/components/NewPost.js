@@ -6,6 +6,7 @@ const NewPost = () => {
     const [title, setTitle] = useState(''); // title
     const [content, setContent] = useState(''); // content
     const [author, setAutor] = useState(''); // author
+    const [files, setFile] = useState({}); // file
 
     const handleSubmit = () => {
         if(title === '' || content === '' || author === '') alert('모든 내용을 다 입력하세요');
@@ -15,19 +16,38 @@ const NewPost = () => {
                 content: content,
                 author: author
             }
+            
             axios.post("/api/posts", body)
-            .then(res => {
-                alert(res.data);
-                window.location.href="/"
+            .then(async res => {
+                await uploadFiles(res.data); 
+                document.location.href = "/"
             })
             .catch(error => {
                 console.log(error);
             })
         }
     }
+    const uploadFiles = (boardId) => {
+        console.log('들어옴');
+        const formData = new FormData(); // 업로드할 파일
+        formData.append("files", files);
+        formData.append("id", parseInt(boardId));
 
+        alert(boardId);
+        return new Promise((resolve, reject) => {
+            axios.post("/api/upload", formData)
+            .then(res => {
+                resolve(res.data);
+            })
+            .catch(error => {
+                alert(error);
+                reject();
+            })
+        })
+    }
+    
     return (
-        <form style={styles.form} onSubmit={handleSubmit}>
+        <form style={styles.form} onSubmit={handleSubmit} encType="multipart/form-data">
             <div style={styles.container}>
                 <label style={styles.label}>제목</label>
                 <input style={styles.input} onChange={(e) => setTitle(e.target.value)} value={title}></input>
@@ -39,10 +59,14 @@ const NewPost = () => {
             <textarea style={styles.textarea} onChange={(e) => setContent(e.target.value)} value={content}></textarea>
             <div style={styles.container}>
                 <label style={styles.label}>첨부파일</label>
-                <input style={styles.input} type="file"></input>
+                <input style={styles.input} type="file" name="file" onChange={(e) => setFile(e.target.files[0])}></input>
+            </div>
+            <div style={styles.container}>
+                <label style={styles.label}>첨부파일</label>
+                <input style={styles.input} type="file" name="file" onChange={(e) => setFile(e.target.files[0])}></input>
             </div>
             <div>
-                <button style={styles.okBtn} type="submit">ok</button>
+                <button style={styles.okBtn} onClick={handleSubmit}>ok</button>
                 <Link to="/" style={styles.cancelBtn}>cancel</Link>
             </div>
         </form>

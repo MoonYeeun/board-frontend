@@ -1,34 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import FileSaver from 'file-saver';
 
-const PostContent = ({location}) => {
-    const {id, title, content, author } = location.state;
+const PostContent = ({match}) => {
+    const {id} = match.params;
     const [isEdit, setEdit] = useState(false);
-    const [inputTitle, setTitle] = useState(title);
-    const [inputContent, setContent] = useState(content);
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [author, setAuthor] = useState('');
+    const [attachment, setAttachment] = useState(null);
+    const [files, setFiles] = useState([{
+        id: 0,
+        fileOriName: '',
+        fileName: ''
+    }]);
 
-    // 게시글 삭제
-    const handleDelete = (id) => {
+    useEffect(() => {
+        getPost().then(data => {
+            setTitle(data.title);
+            setContent(data.content);
+            setAuthor(data.author);
+        });
+        getFiles().then(data => {
+            // 파일 존재하는 경우 
+            if(data.length !== 0) {
+                setFiles(data);
+            }
+        });
+    }, [id]);
+
+    // 해당 게시글 내용 불러오기 
+    const getPost = () => {
         const url = "/api/posts/" + id;
 
-        axios.delete(url)
+        return new Promise((resolve, reject) => {
+            axios.get(url)
+            .then(res => {
+                resolve(res.data);
+            })
+            .catch(error => {
+                reject(error);
+            })
+        })
+    }
+
+    // 해당 게시글에 포함된 첨부파일 불러오기 
+    const getFiles = () => {
+        const url = "/api/getFile/" + id;
+
+        return new Promise((resolve, reject) => {
+            axios.get(url)
+            .then(res => {
+                resolve(res.data);
+            })
+            .catch(error => {
+                reject(error);
+            })
+        })
+    }
+
+    // 게시글 삭제
+    const handleDelete = () => {
+        const postUrl = "/api/posts/" + id;
+
+        axios.delete(postUrl)
         .then(res => {
-            window.location.href="/"
+            // window.location.href="/"
         })
         .catch(error => {
           console.log(error);
         })
+
+        const fileUrl = "/api/deleteFile/" + id;
+        axios.get(fileUrl).then(res => {
+            window.location.href="/"
+        }).catch();
     }
 
     // 게시글 수정
     const handleUpdate = () => {
         const url = "/api/posts/" + id;
-        const body = {
-            title : inputTitle,
-            content: inputContent
-        }
-
+        const body = { title, content }
+          
         axios.put(url, body).then()
         .catch(error => {
           console.log(error);
@@ -36,13 +90,29 @@ const PostContent = ({location}) => {
         setEdit(false);
     }
 
+    // 첨부파일 다운로드
+    const downloadFile = () => {
+        const url = "/api/download/" + files[0].fileName;
+        let reader = new FileReader();
+
+        axios.get(url, {
+            headers: { responseType: 'arraybuffer' }
+        }).then(res => {
+            FileSaver.saveAs(res.data.blob, files[0].fileOriName);
+            setAttachment(res.data);
+        })
+        .catch(error => {
+            console.log(error);
+        })
+    }
+
     return (
         <div style={styles.form}>
             <div style={styles.container}>
                 <label style={styles.label}>제목</label>
                 {
-                    isEdit === false ? <div style={styles.content}>{inputTitle}</div>
-                    : <input style={styles.content} onChange={(e) => setTitle(e.target.value)}></input>
+                    isEdit === false ? <div style={styles.content}>{title}</div>
+                    : <input style={styles.content} onChange={(e) => setTitle(e.target.value)} value={title}></input>
                 }
             </div>
             <div style={styles.container}>
@@ -50,12 +120,11 @@ const PostContent = ({location}) => {
                 <div style={styles.content}>{author}</div>
             </div>
             {
-                isEdit === false ? <div style={styles.textarea}>{inputContent}</div>
-                :  <textarea style={styles.textarea} onChange={(e) => setContent(e.target.value)}></textarea>
+                isEdit === false ? <div style={styles.textarea}>{content}</div>
+                :  <textarea style={styles.textarea} onChange={(e) => setContent(e.target.value)} value={content}></textarea>
             }
             <div style={styles.container}>
-                <label style={styles.label}>첨부파일</label>
-                <input style={styles.input} type="file"></input>
+                <button style={styles.input} type="file" onClick={downloadFile}>{files[0].fileOriName}</button>
             </div>
             <div>
                 {

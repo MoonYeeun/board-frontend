@@ -4,7 +4,7 @@ import { Route, BrowserRouter as Router } from 'react-router-dom';
 import Home from './components/Home';
 import NewPost from './components/NewPost';
 import Header from './components/Header';
-import PostContent from './components/PostContent';
+import PostDetail from './components/PostDetail';
 
 class App extends Component {
   render() {
@@ -14,7 +14,7 @@ class App extends Component {
           <Header></Header>
           <Route exact path="/" component={Home}></Route>
           <Route path="/write" component={NewPost}></Route>
-          <Route path="/posts/:id" component={PostContent}></Route>
+          <Route path="/posts/:id" component={PostDetail}></Route>
         </div>
       </Router>
     )
