@@ -9,7 +9,6 @@ const PostContent = ({match}) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [author, setAuthor] = useState('');
-    const [attachment, setAttachment] = useState(null);
     const [files, setFiles] = useState([{
         id: 0,
         fileOriName: '',
@@ -91,15 +90,15 @@ const PostContent = ({match}) => {
     }
 
     // 첨부파일 다운로드
-    const downloadFile = () => {
-        const url = "/api/download/" + files[0].fileName;
-        let reader = new FileReader();
+    const downloadFile = (id) => {
+        const url = "/api/download/" + files[id].fileName;
 
         axios.get(url, {
             headers: { responseType: 'arraybuffer' }
         }).then(res => {
-            FileSaver.saveAs(res.data.blob, files[0].fileOriName);
-            setAttachment(res.data);
+            console.log(res);
+            let file = new File([res], files[id].fileOriName)
+            FileSaver.saveAs(file);
         })
         .catch(error => {
             console.log(error);
@@ -123,9 +122,11 @@ const PostContent = ({match}) => {
                 isEdit === false ? <div style={styles.textarea}>{content}</div>
                 :  <textarea style={styles.textarea} onChange={(e) => setContent(e.target.value)} value={content}></textarea>
             }
-            <div style={styles.container}>
-                <button style={styles.input} type="file" onClick={downloadFile}>{files[0].fileOriName}</button>
-            </div>
+            {
+                files.map((file, i) => 
+                    <button key={i} style={styles.downloadBtn} type="file" onClick={() => downloadFile(i)}>{file.fileOriName}</button>
+                )
+            }
             <div>
                 {
                     isEdit === false ? (
@@ -199,6 +200,11 @@ const styles = {
         background: '#f8f9fa',
         padding: '.3em', /* 여백으로 높이설정 */
         textDecoration: 'none'
+    },
+    downloadBtn: {
+        border: 'none',
+        background: 'white',
+        marginBottom: '10px'
     }
 }
 export default PostContent;

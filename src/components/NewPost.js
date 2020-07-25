@@ -6,8 +6,16 @@ const NewPost = () => {
     const [title, setTitle] = useState(''); // title
     const [content, setContent] = useState(''); // content
     const [author, setAutor] = useState(''); // author
-    const [files, setFile] = useState({}); // file
+    const [files, setFile] = useState(null); // file
 
+    const handleFiles = (e) => {
+        if(files === null) {
+            setFile([e.target.files[0]]);
+        }
+        else {
+            setFile([...files, e.target.files[0]]);
+        }
+    }
     const handleSubmit = () => {
         if(title === '' || content === '' || author === '') alert('모든 내용을 다 입력하세요');
         else {
@@ -16,9 +24,10 @@ const NewPost = () => {
                 content: content,
                 author: author
             }
-            
+            console.log(files);
             axios.post("/api/posts", body)
             .then(async res => {
+                console.log(res.data);
                 await uploadFiles(res.data); 
                 document.location.href = "/"
             })
@@ -30,10 +39,9 @@ const NewPost = () => {
     const uploadFiles = (boardId) => {
         console.log('들어옴');
         const formData = new FormData(); // 업로드할 파일
-        formData.append("files", files);
         formData.append("id", parseInt(boardId));
+        files.forEach(file => formData.append("files", file));
 
-        alert(boardId);
         return new Promise((resolve, reject) => {
             axios.post("/api/upload", formData)
             .then(res => {
@@ -47,7 +55,7 @@ const NewPost = () => {
     }
     
     return (
-        <form style={styles.form} onSubmit={handleSubmit} encType="multipart/form-data">
+        <div style={styles.form} encType="multipart/form-data">
             <div style={styles.container}>
                 <label style={styles.label}>제목</label>
                 <input style={styles.input} onChange={(e) => setTitle(e.target.value)} value={title}></input>
@@ -59,17 +67,17 @@ const NewPost = () => {
             <textarea style={styles.textarea} onChange={(e) => setContent(e.target.value)} value={content}></textarea>
             <div style={styles.container}>
                 <label style={styles.label}>첨부파일</label>
-                <input style={styles.input} type="file" name="file" onChange={(e) => setFile(e.target.files[0])}></input>
+                <input style={styles.input} type="file" name="file" onChange={handleFiles}></input>
             </div>
             <div style={styles.container}>
                 <label style={styles.label}>첨부파일</label>
-                <input style={styles.input} type="file" name="file" onChange={(e) => setFile(e.target.files[0])}></input>
+                <input style={styles.input} type="file" name="file" onChange={handleFiles}></input>
             </div>
             <div>
                 <button style={styles.okBtn} onClick={handleSubmit}>ok</button>
                 <Link to="/" style={styles.cancelBtn}>cancel</Link>
             </div>
-        </form>
+        </div>
     )
 }
 
